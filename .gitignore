@@ -1,4 +1,4 @@
-srcAssets/
-minAssets/
-dist/
+srcAssets/**/*.svg
+minAssets/**/*.svg
+dist/**/*.svg
 node_modules/

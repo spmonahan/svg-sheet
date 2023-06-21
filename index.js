@@ -1,9 +1,11 @@
 const fs = require('fs');
+const { join } = require('path');
 const { parse, stringify } = require('svgson')
 
-const files = fs.readdirSync('./src');
-
+const DIST_FOLDER = './dist';
+const MIN_FOLDER = './minAssets';
 const WIDTH = 48;
+const ID_ATTRS = ['fill', 'clip-path'];
 
 const walk = (node, callback) => {
     callback(node);
@@ -14,8 +16,7 @@ const walk = (node, callback) => {
 }
 
 const build = async () => {
-    const symbols = [];
-
+    
     let index = 0;
     let svg;
     const allDefs = {
@@ -26,9 +27,11 @@ const build = async () => {
         children: []
     };
     const paths = [];
+
+    const files = fs.readdirSync(MIN_FOLDER).filter(name => name !== '.gitkeep');
     for (const file of files) {
         const idMap = {};
-        const contents = fs.readFileSync(`./src/${file}`, 'utf8');
+        const contents = fs.readFileSync(join(MIN_FOLDER, file), 'utf8');
 
         const json = await parse(contents);
 
@@ -52,8 +55,7 @@ const build = async () => {
 
         // Update ID references to the mapped values
         walk(g, node => {
-            const attrs = ['fill', 'clip-path'];
-            for (const attr of attrs) {
+            for (const attr of ID_ATTRS) {
                 if (node.attributes[attr] && node.attributes[attr].startsWith('url')) {
                     const id = node.attributes[attr].replace('url(#', '').replace(')', '');
                     node.attributes[attr] = `url(#${idMap[id]})`;
@@ -77,7 +79,7 @@ const build = async () => {
 
     const svgString = stringify(svg);
 
-    fs.writeFileSync('./dist/sheet1.svg', svgString);
+    fs.writeFileSync(join(DIST_FOLDER, 'out.svg'), svgString);
 };
 
 build().then(() => console.log('done!')).catch(console.error);
